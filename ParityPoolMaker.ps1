@@ -19,15 +19,18 @@ $poolable = Get-PhysicalDisk | Where-Object { $_.CanPool -eq $true }
 if ($poolable.Count -lt 3) {
     Write-Host "Needed more than 2 poolable disks for pool creation (Parity pool creation)" -ForegroundColor Red
     Write-Host "Needed to be checked CannotPoolReason if disks are not supported" -ForegroundColor Yellow
+    Read-Host "Press Enter to close"
+    Start-Sleep -Seconds 3
     return
 }
 
 #GUI choosing disks for pool
-$selected = $poolable
-    Out-GridView -Title "Disks for new Parity Pool (Ctrl/Shift for multiple choosing)" -PassThru
+$selected = $poolable | Out-GridView -Title "Disks for new Parity Pool (Ctrl/Shift for multiple choosing)" -PassThru
 
 if (-not $selected -or $selected.Count -lt 3) {
-    Write-Host "Needed more than 2 disks..." -ForegroundColor Red
+    Write-Host "Needed more than 2 disks poolable..." -ForegroundColor Red
+    Read-Host "Press Enter to close"
+    Start-Sleep -Seconds 3
     return
 }
 
@@ -47,38 +50,22 @@ New-StoragePool `
     -StorageSubsystemFriendlyName $subsystem `
     -PhysicalDisks $physicalDisks | Out-Null
 
-Write-Host "The pool '$PoolName' has been created" -ForegroundColor ::GetCurrent
+Write-Host "The pool '$PoolName' has been created" -ForegroundColor Green
 
-$createParity = Read-Host "Create a volume with parity? (Y/N)"
+$createParity = Read-Host "Create a volume with parity? Will be used all available size in the pool. (Y/N)"
 
 if ($createParity -notmatch '^(Y|y)$') {
-    Write-Host "Volume creation was skipped." -ForegroundColor Yellow
-    return
+    Write-Host "Volume creation has been skipped." -ForegroundColor Yellow
 }
 
-#Max size of parity-volume
-
-$supported = Get-StoragePool -FriendlyName $PoolName | 
-    Get-VirtualDiskSupportedSize -ResiliencySettingName Parity
-
-$MaxSizeGB = [math]::Round($supported.SizeMax / 1GB, 2)
-Write-Host "Maximum size of the volume: $MaxSizeGB GB" -ForegroundColor Cyan
-
-#Setting size of volume
-$sizeGBT = Read-Host "Enter the size of volume (GB)"
-if (-not [int64]::TryParse($sizeGBT, [ref]$null)) {
-    Write-Host "Input failure, try again." -ForegroundColor Red
-    return
-}
-
-$size = [int64]$sizeGBT * 1GB
+Start-Sleep -Seconds 3
 
 #Creating a new volume with parity
 New-VirtualDisk `
     -StoragePoolFriendlyName $PoolName `
     -FriendlyName $vdName `
     -ResiliencySettingName Parity `
-    -Size $size | Out-Null
+    -UseMaximumSize | Out-Null
 
 #Initialization&partition&format
 Get-VirtualDisk -FriendlyName $vdName |
@@ -87,4 +74,7 @@ Get-VirtualDisk -FriendlyName $vdName |
     New-Partition -AssignDriveLetter -UseMaximumSize |
     Format-Volume -FileSystem NTFS -NewFileSystemLabel $vdName
 
-Write-Host "All is set and donw!" -ForegroundColor Green
+Write-Host "All is set and done!" -ForegroundColor Green
+Read-Host "Press Enter to close"
+Start-Sleep -Seconds 3
+return
