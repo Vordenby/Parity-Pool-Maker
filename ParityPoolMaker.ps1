@@ -48,40 +48,21 @@ New-StoragePool `
 
 Write-Host "The pool '$PoolName' has been created" -ForegroundColor Green
 
-$createParity = Read-Host "Create a volume with parity? (Y/N)"
+$createParity = Read-Host "Create a volume with parity? Will be used all available size in the pool. (Y/N)"
 
 if ($createParity -notmatch '^(Y|y)$') {
     Write-Host "Volume creation has been skipped." -ForegroundColor Yellow
     return
 }
 
-#Max size of parity-volume
-
 Start-Sleep -Seconds 3
-Update-StoragePool -FriendlyName $PoolName
-
-
-$pool = Get-StoragePool -FriendlyName $PoolName
-
-$MaxSizeGB = [math]::Round($pool.SizeRemaining / 1GB, 2)
-
-Write-Host "Maximum size of the volume: $MaxSizeGB GB" -ForegroundColor Cyan
-
-#Setting size of volume
-$sizeGBT = Read-Host "Enter the size of volume (GB)"
-if (-not [int64]::TryParse($sizeGBT, [ref]$null)) {
-    Write-Host "Input failure, try again." -ForegroundColor Red
-    return
-}
-
-$size = [int64]$sizeGBT * 1GB
 
 #Creating a new volume with parity
 New-VirtualDisk `
     -StoragePoolFriendlyName $PoolName `
     -FriendlyName $vdName `
     -ResiliencySettingName Parity `
-    -Size $size | Out-Null
+    -UseMaximumSize | Out-Null
 
 #Initialization&partition&format
 Get-VirtualDisk -FriendlyName $vdName |
