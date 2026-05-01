@@ -60,10 +60,11 @@ if ($createParity -notmatch '^(Y|y)$') {
 Start-Sleep -Seconds 3
 Update-StoragePool -FriendlyName $PoolName
 
-$supported = Get-StoragePool -FriendlyName $PoolName | 
-    Get-VirtualDiskSupportedSize -ResiliencySettingName Parity
 
-$MaxSizeGB = [math]::Round($supported.SizeMax / 1GB, 2)
+$pool = Get-StoragePool -FriendlyName $PoolName
+
+$MaxSizeGB = [math]::Round($pool.SizeRemaining / 1GB, 2)
+
 Write-Host "Maximum size of the volume: $MaxSizeGB GB" -ForegroundColor Cyan
 
 #Setting size of volume
