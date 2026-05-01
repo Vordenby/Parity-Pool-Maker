@@ -12,6 +12,9 @@ if (-not $isAdmin) {
     exit
 }
 
+Write-Host "You need to approve PSSecurityExcecution at once" -ForegroundColor Yellow
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
 #Trying find poolable disks
 
 $poolable = Get-PhysicalDisk | Where-Object { $_.CanPool -eq $true }
@@ -19,8 +22,9 @@ $poolable = Get-PhysicalDisk | Where-Object { $_.CanPool -eq $true }
 if ($poolable.Count -lt 3) {
     Write-Host "Needed more than 2 poolable disks for pool creation (Parity pool creation)" -ForegroundColor Red
     Write-Host "Needed to be checked CannotPoolReason if disks are not supported" -ForegroundColor Yellow
-    Read-Host ""
+    Read-Host "Press Enter to close"
     Start-Sleep -Seconds 3
+    return
 }
 
 #GUI choosing disks for pool
@@ -28,8 +32,9 @@ $selected = $poolable | Out-GridView -Title "Disks for new Parity Pool (Ctrl/Shi
 
 if (-not $selected -or $selected.Count -lt 3) {
     Write-Host "Needed more than 2 disks poolable..." -ForegroundColor Red
-    Read-Host ""
+    Read-Host "Press Enter to close"
     Start-Sleep -Seconds 3
+    return
 }
 
 $physicalDisks = @($selected)
@@ -54,8 +59,6 @@ $createParity = Read-Host "Create a volume with parity? Will be used all availab
 
 if ($createParity -notmatch '^(Y|y)$') {
     Write-Host "Volume creation has been skipped." -ForegroundColor Yellow
-    Read-Host ""
-    Start-Sleep -Seconds 3
 }
 
 Start-Sleep -Seconds 3
@@ -74,5 +77,7 @@ Get-VirtualDisk -FriendlyName $vdName |
     New-Partition -AssignDriveLetter -UseMaximumSize |
     Format-Volume -FileSystem NTFS -NewFileSystemLabel $vdName
 
-Write-Host "All is set and donw!" -ForegroundColor Green
+Write-Host "All is set and done!" -ForegroundColor Green
+Read-Host "Press Enter to close"
 Start-Sleep -Seconds 3
+return
