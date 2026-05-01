@@ -23,8 +23,7 @@ if ($poolable.Count -lt 3) {
 }
 
 #GUI choosing disks for pool
-$selected = $poolable
-    Out-GridView -Title "Disks for new Parity Pool (Ctrl/Shift for multiple choosing)" -PassThru
+$selected = $poolable | Out-GridView -Title "Disks for new Parity Pool (Ctrl/Shift for multiple choosing)" -PassThru
 
 if (-not $selected -or $selected.Count -lt 3) {
     Write-Host "Needed more than 2 disks..." -ForegroundColor Red
@@ -47,16 +46,19 @@ New-StoragePool `
     -StorageSubsystemFriendlyName $subsystem `
     -PhysicalDisks $physicalDisks | Out-Null
 
-Write-Host "The pool '$PoolName' has been created" -ForegroundColor ::GetCurrent
+Write-Host "The pool '$PoolName' has been created" -ForegroundColor Green
 
 $createParity = Read-Host "Create a volume with parity? (Y/N)"
 
 if ($createParity -notmatch '^(Y|y)$') {
-    Write-Host "Volume creation was skipped." -ForegroundColor Yellow
+    Write-Host "Volume creation has been skipped." -ForegroundColor Yellow
     return
 }
 
 #Max size of parity-volume
+
+Start-Sleep -Seconds 3
+Update-StoragePool -FriendlyName $PoolName
 
 $supported = Get-StoragePool -FriendlyName $PoolName | 
     Get-VirtualDiskSupportedSize -ResiliencySettingName Parity
