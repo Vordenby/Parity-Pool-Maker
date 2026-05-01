@@ -12,9 +12,6 @@ if (-not $isAdmin) {
     exit
 }
 
-Write-Host "You need to approve PSSecurityExcecution at once" -ForegroundColor Yellow
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-
 #Trying find poolable disks
 
 $poolable = Get-PhysicalDisk | Where-Object { $_.CanPool -eq $true }
